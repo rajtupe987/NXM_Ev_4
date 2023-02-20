@@ -12,15 +12,17 @@ const app=express();
 app.use(express.json());
 
 
+app.get("/",(req,res)=>{
+    res.send("WELCOME")
+});
+
 
 
 app.use("/users",userRoute);
  app.use(authenticate);
  app.use("/posts",postRoute)
 
-app.get("/",(req,res)=>{
-    res.send("WELCOME")
-});
+
 
 app.listen(process.env.port,async()=>{
 

@@ -74,9 +74,9 @@ postRoute.delete("/delete/:id",async(req,res)=>{
     try {
         const id=req.params.id;
         await postmodel.findByIdAndDelete({_id:id});
-        res.send(({"msg":"Error while deleteing the posts"}))
+        res.send(({"msg":"user has been deleted"}))
     } catch (error) {
-        
+        res.send(({"msg":"Error while deleteing"}))
     }
 });
 

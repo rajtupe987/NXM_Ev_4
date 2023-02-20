@@ -1,19 +1,25 @@
-const express=require("express");
-const {postmodel}=require("../model/post.model");
+const express = require("express");
+const { postmodel } = require("../model/post.model");
 
 
-const postRoute=express.Router();
+const postRoute = express.Router();
 
 
-postRoute.get("/",async(req,res)=>{
+postRoute.get("/", async (req, res) => {
     try {
-        const posts=await postmodel.find();
+        const posts = await postmodel.find();
         res.send(posts)
     } catch (error) {
-        res.send({"msg":"Error while getting the posts"})
+        res.send({ "msg": "Error while getting the posts" })
     }
 });
-postRoute.get("/:id",async(req,res)=>{
+
+
+
+
+
+
+postRoute.get("/:id", async (req, res) => {
     const id = req.params.id;
     const post = await postmodel.findOne({_id:id});
     const userId_in_post = post.userId;
@@ -22,8 +28,8 @@ postRoute.get("/:id",async(req,res)=>{
         if (userId_making_req !== userId_in_post) {
             res.send({ "msg": "You are not Authorized" })
         } else {
-            const posts = await postmodel.findById({ _id: id });
-            res.send(posts)
+            const notes = await postmodel.find({ _id: id });
+            res.send(notes)
         }
 
     } catch (error) {
@@ -31,8 +37,8 @@ postRoute.get("/:id",async(req,res)=>{
     }
 })
 
-postRoute.post("/create",async(req,res)=>{
-    
+postRoute.post("/create", async (req, res) => {
+
     try {
         const payload = req.body;
 
@@ -49,40 +55,46 @@ postRoute.post("/create",async(req,res)=>{
 
 
 
-postRoute.patch("/update/:id",async(req,res)=>{
-    
-    const id=req.params.id;
-    let payload=req.body;
-    let post=await postmodel.findOne({_id:id});
-    const userId_in_post=post.userId;
-    const userId_making_req=req.body.userId;
+postRoute.patch("/update/:id", async (req, res) => {
+
+    const id = req.params.id;
+    let payload = req.body;
+    let post = await postmodel.findOne({ _id: id });
+    const userId_in_post = post.userId;
+    const userId_making_req = req.body.userId;
 
     try {
-        if(userId_making_req!==userId_in_post){
-            res.send({"msg":"Your are not Athorized"})
-        }else{
-            await postmodel.findByIdAndUpdate({_id:id},payload);
-            res.send({"msg":"Post has been updated"})
+        if (userId_making_req !== userId_in_post) {
+            res.send({ "msg": "You are not Athorized" })
+        } else {
+            await postmodel.findByIdAndUpdate({ _id: id }, payload);
+            res.send({ "msg": "Post has been updated" })
         }
     } catch (error) {
-        res.send({"msg":"Error while updating the posts"})
+        res.send({ "msg": "Error while updating the posts" })
     }
 });
 
-postRoute.delete("/delete/:id",async(req,res)=>{
-    
+postRoute.delete("/delete/:id", async (req, res) => {
+    const id = req.params.id;
+    let post = await postmodel.findOne({ _id: id });
+    const userId_in_post = post.userId;
+    const userId_making_req = req.body.userId;
     try {
-        const id=req.params.id;
-        await postmodel.findByIdAndDelete({_id:id});
-        res.send(({"msg":"user has been deleted"}))
+        if(userId_making_req!==userId_in_post){
+            res.send(({ "msg": "You are not Athorized" }))
+        }else{
+            await postmodel.findByIdAndDelete({ _id: id });
+            res.send({"msg":"Data has been deleted"})
+        }
+        
+        
     } catch (error) {
-        res.send(({"msg":"Error while deleteing"}))
+        res.send(({ "msg": "Error while deleteing the posts" }))
     }
 });
 
 
-module.exports={
+module.exports = {
     postRoute
 }
-
-

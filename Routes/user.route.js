@@ -1,84 +1,91 @@
-const express=require("express");
-const {usermodel}=require("../model/user.model");
-const jwt=require("jsonwebtoken");
-const bcrypt=require("bcrypt");
+const express = require("express");
+const { usermodel } = require("../model/user.model");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+require("dotenv").config();
 
-const userRoute=express.Router();
+const userRoute = express.Router();
 
 
-userRoute.post("/register",async(req,res)=>{
+userRoute.post("/register", async (req, res) => {
+  try {
+    const payload=req.body;
+    const user=await usermodel.findOne({email:payload.email});
 
-   const {name,email,age,gender,city,pass} = req.body;
-  
-   try {
-    
-    bcrypt.hash(pass,5,async(err,hash)=>{
+    if(user){
+        req.send({"msg":"User is already exist"})
+    }else{
+        //encrypting the password...
+        const hashedpass=await bcrypt.hashSync(payload.pass,7);
+        payload.pass=hashedpass;
 
-        if(err){
-            res.send(({"msg":"Sonmething went wrong"}))
-        }else{
-           const app= new usermodel({name,email,age,gender,city,pass:hash});
-           await app.save();
-            res.send(({"mag":"New user created"}))
+        const newUser=new usermodel(payload);
+        await newUser.save();
+        return res.json({"msg":"User Registered",user:newUser})
+    }
+  } catch (error) {
+     res.send({"msg":error.message})
+  }
+});
+
+
+userRoute.post("/login", async (req, res) => {
+    try {
+        const payload=req.body;
+        const user=await usermodel.findOne({email:payload.email});
+        if(!user){
+           return res.send({"msg":"Please SignUp first"})
         }
-    })
-   } catch (error) {
-    res.send(({"msg":"Sonmething went wrong"}))
-   }
 
-   
-});
+        const ispassCorrect=await bcrypt.compare(
+            payload.pass,
+            user.pass
+        )
 
-
-userRoute.post("/login",async(req,res)=>{
-    
-    try {
-        const {email,pass}=req.body;
-        let user=await usermodel.find({email});
-        if(user.length>0){
-            bcrypt.compare(pass,user[0].pass,(err,result)=>{
-                if(result){
-                    let token=jwt.sign({userId:user[0]._id},"raj");
-                    res.send({"msg":"User Logged in","token":token});
-                }else{
-                    res.send({"msg":"Wrong Credentials"})
-                }
-            })
+        if(ispassCorrect){
+           let token= await jwt.sign({email:user.email,userId:user._id},process.env.key)
+        
+           res.send({"msg":"Login Succesfull",token})
+        
         }else{
-            res.send({"msg":"Wrong Credentials"})
+            res.send({"msg":"Invalid Credentials"})
         }
     } catch (error) {
-        res.send({"msg":"Error while login"})
+        res.send({"msg":error.message})
     }
 });
 
-userRoute.patch("/update/:id",async(req,res)=>{
-    
-  const userid=req.params.id;
-  const payload=req.body;
+
+
+
+
+userRoute.patch("/update/:id", async (req, res) => {
+
+    const userid = req.params.id;
+    const payload = req.body;
 
     try {
-        await usermodel.findByIdAndUpdate({_id:userid},payload);
-        res.send({"msg":"User has been updated"})
+        await usermodel.findByIdAndUpdate({ _id: userid }, payload);
+        res.send({ "msg": "User has been updated" })
     } catch (error) {
-        res.send({"msg":"Error while updating the user "})
+        res.send({ "msg": "Error while updating the user " })
     }
 });
 
 
 
 
-userRoute.delete("/delete/:id",async(req,res)=>{
-    
+userRoute.delete("/delete/:id", async (req, res) => {
+
     try {
-        const userid=req.params.id;
-        await usermodel.findByIdAndDelete({_id:userid});
-        res.send({"msg":"User has been deleted"})
+        const userid = req.params.id;
+        await usermodel.findByIdAndDelete({ _id: userid });
+        res.send({ "msg": "User has been deleted" })
     } catch (error) {
-        res.send({"msg":"Error while deleting the user"})
+        res.send({ "msg": "Error while deleting the user" })
     }
 });
 
-module.exports={
+module.exports = {
     userRoute
 }
